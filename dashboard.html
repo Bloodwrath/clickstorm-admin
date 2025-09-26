@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Storm - Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="dashboard-page">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-bolt"></i> Click Storm</h2>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <ul class="sidebar-menu">
+            <li class="menu-item active">
+                <a href="#dashboard" data-section="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#inventario" data-section="inventario">
+                    <i class="fas fa-boxes"></i>
+                    <span>Inventario</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#clientes" data-section="clientes">
+                    <i class="fas fa-users"></i>
+                    <span>Clientes</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#proveedores" data-section="proveedores">
+                    <i class="fas fa-truck"></i>
+                    <span>Proveedores</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#pedidos" data-section="pedidos">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Pedidos</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#compras" data-section="compras">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Compras</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="mobile-toggle" id="mobileToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 id="pageTitle">Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-menu">
+                    <span id="userEmail">usuario@clickstorm.com</span>
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Sections -->
+        <div class="content-container">
+
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Ventas del Mes</h3>
+                            <p class="stat-number">$0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-week"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Ventas de la Semana</h3>
+                            <p class="stat-number">$0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Inventario Bajo</h3>
+                            <p class="stat-number">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>Pedidos Pendientes</h3>
+                            <p class="stat-number">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-charts">
+                    <div class="chart-placeholder">
+                        <h3>Gráfico de Ventas</h3>
+                        <p>Aquí irá el gráfico de ventas</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Inventario Section -->
+            <section id="inventario-section" class="content-section">
+                <div class="section-header">
+                    <h2>Gestión de Inventario</h2>
+                    <div class="inventory-filters">
+                        <select id="filterTipoProducto" class="filter-select">
+                            <option value="">Todos los productos</option>
+                            <option value="materia_prima">Materia Prima</option>
+                            <option value="producto_venta">Producto de Venta</option>
+                        </select>
+                        <select id="filterCategoria" class="filter-select">
+                            <option value="">Todas las categorías</option>
+                            <option value="sublimacion">Sublimación</option>
+                            <option value="grabado_laser">Grabado Láser</option>
+                            <option value="publicidad">Publicidad</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" id="addProductoBtn">
+                        <i class="fas fa-plus"></i>
+                        Agregar Producto
+                    </button>
+                </div>
+
+                <div class="inventario-container">
+                    <div class="inventario-filters">
+                        <input type="text" id="searchInventario" placeholder="Buscar productos..." class="search-input">
+                    </div>
+
+                    <div class="inventario-grid" id="inventarioGrid">
+                        <!-- Los productos se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Clientes Section -->
+            <section id="clientes-section" class="content-section">
+                <div class="section-header">
+                    <h2>Gestión de Clientes</h2>
+                    <button class="btn-primary" id="addClienteBtn">
+                        <i class="fas fa-plus"></i>
+                        Agregar Cliente
+                    </button>
+                </div>
+
+                <div class="clientes-container">
+                    <div class="clientes-filters">
+                        <input type="text" id="searchClientes" placeholder="Buscar clientes..." class="search-input">
+                    </div>
+
+                    <div class="clientes-grid" id="clientesGrid">
+                        <!-- Los clientes se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Proveedores Section -->
+            <section id="proveedores-section" class="content-section">
+                <div class="section-header">
+                    <h2>Gestión de Proveedores</h2>
+                    <button class="btn-primary" id="addProveedorBtn">
+                        <i class="fas fa-plus"></i>
+                        Agregar Proveedor
+                    </button>
+                </div>
+
+                <div class="proveedores-container">
+                    <div class="proveedores-filters">
+                        <input type="text" id="searchProveedores" placeholder="Buscar proveedores..."
+                            class="search-input">
+                    </div>
+
+                    <div class="proveedores-grid" id="proveedoresGrid">
+                        <!-- Los proveedores se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pedidos Section -->
+            <section id="pedidos-section" class="content-section">
+                <div class="section-header">
+                    <h2>Gestión de Pedidos</h2>
+                    <button class="btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Nuevo Pedido
+                    </button>
+                </div>
+                <div class="content-placeholder">
+                    <p>Módulo de pedidos en desarrollo...</p>
+                </div>
+            </section>
+
+            <!-- Compras Section -->
+            <section id="compras-section" class="content-section">
+                <div class="section-header">
+                    <h2>Registro de Compras</h2>
+                    <button class="btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Registrar Compra
+                    </button>
+                </div>
+                <div class="content-placeholder">
+                    <p>Módulo de compras en desarrollo...</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Modal para Agregar/Editar Proveedor -->
+    <div id="proveedorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Agregar Proveedor</h3>
+                <span class="close" id="closeModal">&times;</span>
+            </div>
+
+            <form id="proveedorForm" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fotoPreview">Foto del Negocio</label>
+                        <div class="photo-upload">
+                            <div class="photo-preview" id="fotoPreview">
+                                <i class="fas fa-camera"></i>
+                                <span>Subir foto</span>
+                            </div>
+                            <input type="file" id="fotoInput" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombreNegocio">Nombre del Negocio *</label>
+                        <input type="text" id="nombreNegocio" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombreProveedor">Nombre del Proveedor</label>
+                        <input type="text" id="nombreProveedor">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="telefono">Número Telefónico *</label>
+                        <input type="tel" id="telefono" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="correo">Correo Electrónico</label>
+                        <input type="email" id="correo">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sitioWeb">Sitio Web</label>
+                        <input type="url" id="sitioWeb" placeholder="https://">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="direccion">Dirección *</label>
+                        <textarea id="direccion" rows="2" required></textarea>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="descripcion">¿Qué provee? *</label>
+                        <textarea id="descripcion" rows="3" required
+                            placeholder="Describe los productos o servicios que ofrece este proveedor..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelBtn">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="saveBtn">
+                        <i class="fas fa-save"></i>
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/proveedores.js"></script>
+
+    <!-- Modal para Agregar/Editar Cliente -->
+    <div id="clienteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="clienteModalTitle">Agregar Cliente</h3>
+                <span class="close" id="closeClienteModal">&times;</span>
+            </div>
+
+            <form id="clienteForm" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="clienteFotoPreview">Foto del Cliente</label>
+                        <div class="photo-upload">
+                            <div class="photo-preview" id="clienteFotoPreview">
+                                <i class="fas fa-camera"></i>
+                                <span>Subir foto</span>
+                            </div>
+                            <input type="file" id="clienteFotoInput" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombreCliente">Nombre del Cliente *</label>
+                        <input type="text" id="nombreCliente" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefonoCliente">Número Telefónico *</label>
+                        <input type="tel" id="telefonoCliente" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="correoCliente">Correo Electrónico</label>
+                        <input type="email" id="correoCliente">
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="clienteCancelBtn">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="clienteSaveBtn">
+                        <i class="fas fa-save"></i>
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/clientes.js"></script>
+
+    <!-- Modal para Agregar/Editar Producto -->
+    <div id="productoModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="productoModalTitle">Agregar Producto</h3>
+                <span class="close" id="closeProductoModal">&times;</span>
+            </div>
+
+            <form id="productoForm" class="modal-form">
+                <!-- Información básica -->
+                <div class="form-section">
+                    <h4>Información Básica</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productoFotoPreview">Imagen del Producto</label>
+                            <div class="photo-upload">
+                                <div class="photo-preview" id="productoFotoPreview">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Subir foto</span>
+                                </div>
+                                <input type="file" id="productoFotoInput" accept="image/*" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nombreProducto">Nombre del Producto *</label>
+                            <input type="text" id="nombreProducto" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="codigoBarras">Código de Barras</label>
+                            <div class="barcode-input">
+                                <input type="text" id="codigoBarras">
+                                <button type="button" id="scanBarcodeBtn" class="btn-scan">
+                                    <i class="fas fa-barcode"></i>
+                                    Escanear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="proveedorSelect">Proveedor</label>
+                            <select id="proveedorSelect">
+                                <option value="">Seleccionar proveedor...</option>
+                                <option value="agregar_nuevo">+ Agregar nuevo proveedor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipoProducto">Tipo de Producto *</label>
+                            <select id="tipoProducto" required>
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="materia_prima">Materia Prima</option>
+                                <option value="producto_venta">Producto de Venta</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="categoria">Categoría *</label>
+                            <select id="categoria" required>
+                                <option value="">Seleccionar categoría...</option>
+                                <option value="sublimacion">Sublimación</option>
+                                <option value="grabado_laser">Grabado Láser</option>
+                                <option value="publicidad">Publicidad</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="subcategoria">Subcategoría</label>
+                            <select id="subcategoria">
+                                <option value="">Seleccionar subcategoría...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección para Materia Prima -->
+                <div class="form-section" id="materiaPrimaSection" style="display: none;">
+                    <h4>Datos de Materia Prima</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="costoTotal">Costo Total de la Compra *</label>
+                            <input type="number" id="costoTotal" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="cantidadAgregar">Cantidad a Agregar *</label>
+                            <input type="number" id="cantidadAgregar" min="1">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="precioUnitario">Precio Unitario (Calculado)</label>
+                            <input type="number" id="precioUnitario" step="0.01" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="stockActual">Stock Actual</label>
+                            <input type="number" id="stockActual" readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="costoMenudeo">Costo de Menudeo</label>
+                            <input type="number" id="costoMenudeo" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="costoMayoreo">Costo de Mayoreo</label>
+                            <input type="number" id="costoMayoreo" step="0.01" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="esPersonalizable">
+                                Es personalizable
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row" id="dimensionesRow" style="display: none;">
+                        <div class="form-group">
+                            <label for="anchoPersonalizable">Ancho Personalizable (cm)</label>
+                            <input type="number" id="anchoPersonalizable" step="0.1" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="altoPersonalizable">Alto Personalizable (cm)</label>
+                            <input type="number" id="altoPersonalizable" step="0.1" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección para Producto de Venta -->
+                <div class="form-section" id="productoVentaSection" style="display: none;">
+                    <h4>Datos de Producto de Venta</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="precioMenudeoVenta">Precio de Menudeo *</label>
+                            <input type="number" id="precioMenudeoVenta" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="precioMayoreoVenta">Precio de Mayoreo *</label>
+                            <input type="number" id="precioMayoreoVenta" step="0.01" min="0">
+                        </div>
+                    </div>
+
+                    <div class="materias-primas-section">
+                        <h5>Materias Primas que lo Componen</h5>
+                        <div class="search-materia-prima">
+                            <input type="text" id="searchMateriaPrima" placeholder="Buscar materia prima...">
+                            <div id="materiaPrimaResults" class="search-results"></div>
+                        </div>
+
+                        <div id="carritoMateriasPrimas" class="carrito-materias">
+                            <!-- Lista de materias primas seleccionadas -->
+                        </div>
+
+                        <div class="costo-produccion">
+                            <strong>Costo de Producción: $<span id="costoProduccionTotal">0.00</span></strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="productoCancelBtn">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="productoSaveBtn">
+                        <i class="fas fa-save"></i>
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/inventario.js"></script>
+</body>
+
+</html>

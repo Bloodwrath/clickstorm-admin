@@ -7,6 +7,7 @@ class InventarioManager {
         this.carritoMateriasPrimas = [];
         this.editingId = null;
         this.currentImageChunks = null;
+        this.shouldRestoreProductModal = false; // Para controlar la restauración del modal
 
         // Definir subcategorías por categoría
         this.subcategorias = {
@@ -252,20 +253,90 @@ class InventarioManager {
     openProveedorModal() {
         // Abrir modal de proveedor desde inventario
         if (window.proveedoresManager) {
+            // Ocultar temporalmente el modal de producto
+            const productoModal = document.getElementById('productoModal');
+            productoModal.style.display = 'none';
+
+            // Opcional: Mostrar indicador
+            const indicator = document.createElement('div');
+            indicator.className = 'modal-indicator';
+            indicator.id = 'modalIndicator';
+            indicator.innerHTML = '<i class="fas fa-info-circle"></i> Agregando proveedor...';
+            document.body.appendChild(indicator);
+
+
+
+            // Marcar que debemos restaurar el modal de producto
+            this.shouldRestoreProductModal = true;
+
+            // Abrir modal de proveedor
             window.proveedoresManager.openModal();
 
-            // Escuchar cuando se cierre el modal de proveedor para actualizar la lista
+            // Escuchar cuando se cierre el modal de proveedor
             const originalCloseModal = window.proveedoresManager.closeModal;
+            const originalHandleSubmit = window.proveedoresManager.handleSubmit;
+
+            // Sobrescribir función de cierre
             window.proveedoresManager.closeModal = () => {
                 originalCloseModal.call(window.proveedoresManager);
-                // Recargar proveedores después de un pequeño delay
-                setTimeout(() => {
-                    this.loadProveedores();
-                }, 500);
+                this.restoreProductModal();
 
                 // Restaurar función original
                 window.proveedoresManager.closeModal = originalCloseModal;
+                window.proveedoresManager.handleSubmit = originalHandleSubmit;
             };
+
+            // Sobrescribir función de submit para también recargar proveedores
+            window.proveedoresManager.handleSubmit = async (e) => {
+                e.preventDefault();
+
+                const submitBtn = document.getElementById('saveBtn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+                submitBtn.disabled = true;
+
+                try {
+                    const formData = window.proveedoresManager.getFormData();
+
+                    if (window.proveedoresManager.editingId) {
+                        await window.proveedoresManager.updateProveedor(window.proveedoresManager.editingId, formData);
+                    } else {
+                        await window.proveedoresManager.addProveedor(formData);
+                    }
+
+                    window.proveedoresManager.closeModal(); // Esto llamará a la función modificada arriba
+                    // No necesitamos loadProveedores aquí porque se llamará en restoreProductModal
+                    window.proveedoresManager.showSuccessMessage(window.proveedoresManager.editingId ? 'Proveedor actualizado correctamente' : 'Proveedor agregado correctamente');
+                } catch (error) {
+                    console.error('Error al guardar proveedor:', error);
+                    window.proveedoresManager.showErrorMessage('Error al guardar el proveedor. Intenta con una imagen más pequeña.');
+                } finally {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            };
+        }
+    }
+
+    restoreProductModal() {
+        if (this.shouldRestoreProductModal) {
+            // Opcional: Quitar indicador
+            const indicator = document.getElementById('modalIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+
+            // Restaurar el modal de producto
+            const productoModal = document.getElementById('productoModal');
+            productoModal.style.display = 'block';
+
+            // Recargar proveedores en el dropdown
+            setTimeout(() => {
+                this.loadProveedores();
+            }, 300);
+
+            // Resetear bandera
+            this.shouldRestoreProductModal = false;
         }
     }
 
@@ -496,6 +567,7 @@ class InventarioManager {
         this.editingId = null;
         this.currentImageChunks = null;
         this.carritoMateriasPrimas = [];
+        this.shouldRestoreProductModal = false; // Resetear bandera al cerrar
         document.getElementById('productoForm').reset();
         this.resetPhotoPreview();
         this.toggleProductSections('');

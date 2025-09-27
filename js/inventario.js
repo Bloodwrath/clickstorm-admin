@@ -8,6 +8,7 @@ class InventarioManager {
         this.editingId = null;
         this.currentImageChunks = null;
         this.shouldRestoreProductModal = false; // Para controlar la restauración del modal
+        this.currentViewingProduct = null; // Producto que se está viendo en detalles
 
         // Definir subcategorías por categoría
         this.subcategorias = {
@@ -124,6 +125,20 @@ class InventarioManager {
             if (e.target === modal) {
                 this.closeModal();
             }
+
+            const detallesModal = document.getElementById('detallesProductoModal');
+            if (e.target === detallesModal) {
+                this.closeDetallesModal();
+            }
+        });
+
+        // Modal de detalles
+        document.getElementById('closeDetallesModal').addEventListener('click', () => {
+            this.closeDetallesModal();
+        });
+
+        document.getElementById('closeDetallesBtn').addEventListener('click', () => {
+            this.closeDetallesModal();
         });
     }
 
@@ -643,10 +658,30 @@ class InventarioManager {
                 await this.addProducto(formData);
             }
 
+            // Verificar si se debe agregar compra
+            const debeAgregarCompra = document.getElementById('agregarCompra').checked;
+            const esNuevoProducto = !this.editingId;
+
             this.closeModal();
             this.loadProductos();
             this.loadMateriasPrimas(); // Recargar materias primas
-            this.showSuccessMessage(this.editingId ? 'Producto actualizado correctamente' : 'Producto agregado correctamente');
+
+            // Si es materia prima nueva y se marcó agregar compra
+            if (esNuevoProducto && debeAgregarCompra && formData.tipoProducto === 'materia_prima') {
+                // Guardar historial de precios
+                await this.saveHistorialPrecios(formData, null); // null porque es nuevo producto
+
+                // Abrir modal de compras con datos precargados
+                setTimeout(() => {
+                    if (window.comprasManager) {
+                        window.comprasManager.openCompraFromProduct(formData);
+                    }
+                }, 500);
+
+                this.showSuccessMessage('Producto agregado correctamente. Abriendo formulario de compra...');
+            } else {
+                this.showSuccessMessage(this.editingId ? 'Producto actualizado correctamente' : 'Producto agregado correctamente');
+            }
         } catch (error) {
             console.error('Error al guardar producto:', error);
             this.showErrorMessage('Error al guardar el producto');
@@ -715,6 +750,26 @@ class InventarioManager {
 
     async updateProducto(id, productoData) {
         await db.collection('productos').doc(id).update(productoData);
+    }
+
+
+    async saveHistorialPrecios(productoData, productoId) {
+        if (productoData.tipoProducto === 'materia_prima' && productoData.costoTotal && productoData.cantidadComprada) {
+            try {
+                const historialData = {
+                    productoId: productoId || 'nuevo', // Si es nuevo producto, se actualizará después
+                    nombreProducto: productoData.nombreProducto,
+                    costoTotal: productoData.costoTotal,
+                    cantidad: productoData.cantidadComprada,
+                    fechaCompra: firebase.firestore.FieldValue.serverTimestamp(),
+                    fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                await db.collection('historial_precios').add(historialData);
+            } catch (error) {
+                console.error('Error al guardar historial:', error);
+            }
+        }
     }
 
     async loadProductos() {
@@ -804,7 +859,7 @@ class InventarioManager {
         }
 
         return `
-            <div class="producto-card">
+            <div class="producto-card clickable-product" onclick="inventarioManager.openDetallesModal('${producto.id}')">
                 <div class="producto-header">
                     ${imageSrc ?
                 `<img src="${imageSrc}" alt="${producto.nombreProducto}" class="producto-image">` :
@@ -874,6 +929,109 @@ class InventarioManager {
 
     showErrorMessage(message) {
         alert(message);
+    }
+
+    // Funciones para modal de detalles
+    openDetallesModal(productoId) {
+        const producto = this.productos.find(p => p.id === productoId);
+        if (!producto) return;
+
+        this.currentViewingProduct = producto;
+
+        // Llenar información básica
+        document.getElementById('detallesNombre').textContent = producto.nombreProducto;
+        document.getElementById('detallesTipo').textContent = producto.tipoProducto === 'materia_prima' ? 'Materia Prima' : 'Producto de Venta';
+        document.getElementById('detallesTipo').className = `badge tipo-${producto.tipoProducto.replace('_', '-')}`;
+        document.getElementById('detallesCategoria').textContent = this.getCategoriaDisplay(producto.categoria);
+        document.getElementById('detallesCategoria').className = 'badge categoria';
+
+        document.getElementById('detallesCodigoBarra').textContent = producto.codigoBarras || '-';
+
+        // Proveedor
+        const proveedor = this.proveedores.find(p => p.id === producto.proveedorId);
+        document.getElementById('detallesProveedor').textContent = proveedor ? proveedor.nombreNegocio : 'Sin proveedor';
+
+        // Imagen
+        const imageLarge = document.getElementById('productoImageLarge');
+        if (producto.IMAGEN && producto.IMAGEN.length > 0) {
+            const imageSrc = this.reconstructImageFromChunks(producto.IMAGEN);
+            imageLarge.innerHTML = `<img src="${imageSrc}" alt="${producto.nombreProducto}">`;
+        } else {
+            imageLarge.innerHTML = '<i class="fas fa-cube"></i>';
+        }
+
+        // Información específica según tipo
+        if (producto.tipoProducto === 'materia_prima') {
+            document.getElementById('stockInfo').style.display = 'block';
+            document.getElementById('detallesStock').textContent = producto.stockActual || 0;
+
+            let preciosHTML = '';
+            if (producto.precioUnitario) preciosHTML += `<div>Unitario: $${producto.precioUnitario}</div>`;
+            if (producto.costoMenudeo) preciosHTML += `<div>Menudeo: $${producto.costoMenudeo}</div>`;
+            if (producto.costoMayoreo) preciosHTML += `<div>Mayoreo: $${producto.costoMayoreo}</div>`;
+            document.getElementById('detallesPrecios').innerHTML = preciosHTML || 'No configurado';
+        } else {
+            document.getElementById('stockInfo').style.display = 'none';
+
+            let preciosHTML = '';
+            if (producto.precioMenudeo) preciosHTML += `<div>Menudeo: $${producto.precioMenudeo}</div>`;
+            if (producto.precioMayoreo) preciosHTML += `<div>Mayoreo: $${producto.precioMayoreo}</div>`;
+            if (producto.costoProduccion) preciosHTML += `<div>Costo Producción: $${producto.costoProduccion}</div>`;
+            document.getElementById('detallesPrecios').innerHTML = preciosHTML || 'No configurado';
+        }
+
+        // Cargar historial de precios
+        this.loadHistorialPrecios(productoId);
+
+        // Mostrar modal
+        document.getElementById('detallesProductoModal').style.display = 'block';
+    }
+
+    closeDetallesModal() {
+        document.getElementById('detallesProductoModal').style.display = 'none';
+        this.currentViewingProduct = null;
+    }
+
+    async loadHistorialPrecios(productoId) {
+        try {
+            const querySnapshot = await db.collection('historial_precios')
+                .where('productoId', '==', productoId)
+                .orderBy('fechaCompra', 'desc')
+                .get();
+
+            let historialHTML = '';
+
+            if (querySnapshot.empty) {
+                historialHTML = '<p style="text-align: center; color: var(--gris-medio);">No hay historial de precios</p>';
+            } else {
+                querySnapshot.forEach((doc) => {
+                    const historial = doc.data();
+                    const fecha = historial.fechaCompra.toDate ? historial.fechaCompra.toDate() : new Date(historial.fechaCompra);
+                    const fechaFormateada = fecha.toLocaleDateString('es-MX');
+
+                    const precioUnitario = historial.costoTotal && historial.cantidad ?
+                        (historial.costoTotal / historial.cantidad).toFixed(2) : 'N/A';
+
+                    historialHTML += `
+                        <div class="historial-item">
+                            <div class="historial-item-header">
+                                <span class="historial-fecha">${fechaFormateada}</span>
+                            </div>
+                            <div class="historial-detalles">
+                                <div><span>Costo Total:</span><span>$${historial.costoTotal || 0}</span></div>
+                                <div><span>Cantidad:</span><span>${historial.cantidad || 0} piezas</span></div>
+                                <div><span>Precio Unitario:</span><span>$${precioUnitario}</span></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('historialPrecios').innerHTML = historialHTML;
+        } catch (error) {
+            console.error('Error al cargar historial:', error);
+            document.getElementById('historialPrecios').innerHTML = '<p style="color: var(--rojo-error);">Error al cargar historial</p>';
+        }
     }
 }
 

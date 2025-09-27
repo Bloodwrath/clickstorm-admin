@@ -229,14 +229,44 @@
             <!-- Compras Section -->
             <section id="compras-section" class="content-section">
                 <div class="section-header">
-                    <h2>Registro de Compras</h2>
-                    <button class="btn-primary">
-                        <i class="fas fa-plus"></i>
-                        Registrar Compra
-                    </button>
+                    <h2>Gestión de Compras</h2>
+                    <div class="compras-header-actions">
+                        <select id="filterTarjeta" class="filter-select">
+                            <option value="">Todas las tarjetas</option>
+                        </select>
+                        <button class="btn-primary" id="addTarjetaBtn">
+                            <i class="fas fa-credit-card"></i>
+                            Nueva Tarjeta
+                        </button>
+                    </div>
                 </div>
-                <div class="content-placeholder">
-                    <p>Módulo de compras en desarrollo...</p>
+
+                <div class="compras-container">
+                    <div class="compras-filters">
+                        <input type="text" id="searchCompras" placeholder="Buscar compras..." class="search-input">
+                        <div class="date-filters">
+                            <input type="month" id="filterMes" class="date-input">
+                            <button class="btn-secondary" id="clearFilters">Limpiar filtros</button>
+                        </div>
+                    </div>
+
+                    <div class="tarjetas-grid" id="tarjetasGrid">
+                        <!-- Las tarjetas se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+
+                <div class="calendario-section">
+                    <div class="calendario-header">
+                        <h3>Calendario de Pagos</h3>
+                        <div class="calendario-nav">
+                            <button id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                            <span id="currentMonth">Diciembre 2024</span>
+                            <button id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div class="calendario-grid" id="calendarioGrid">
+                        <!-- El calendario se generará dinámicamente -->
+                    </div>
                 </div>
             </section>
         </div>
@@ -549,6 +579,19 @@
                     </div>
                 </div>
 
+                <div class="form-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="agregarCompra">
+                                Agregar esta compra al registro de compras
+                            </label>
+                            <small class="form-help">Se abrirá el modal de compras después de guardar el
+                                producto</small>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" id="productoCancelBtn">Cancelar</button>
                     <button type="submit" class="btn-primary" id="productoSaveBtn">
@@ -560,7 +603,273 @@
         </div>
     </div>
 
+    <!-- Modal de Detalles del Producto -->
+    <div id="detallesProductoModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="detallesProductoTitle">Detalles del Producto</h3>
+                <span class="close" id="closeDetallesModal">&times;</span>
+            </div>
+
+            <div class="modal-body">
+                <div class="producto-details-container">
+                    <div class="producto-details-main">
+                        <div class="producto-image-large" id="productoImageLarge">
+                            <i class="fas fa-cube"></i>
+                        </div>
+
+                        <div class="producto-info-detailed">
+                            <h2 id="detallesNombre">Nombre del Producto</h2>
+                            <div class="producto-badges">
+                                <span class="badge" id="detallesTipo">Tipo</span>
+                                <span class="badge" id="detallesCategoria">Categoría</span>
+                            </div>
+
+                            <div class="producto-specs">
+                                <div class="spec-item">
+                                    <label>Código de Barras:</label>
+                                    <span id="detallesCodigoBarra">-</span>
+                                </div>
+                                <div class="spec-item">
+                                    <label>Proveedor:</label>
+                                    <span id="detallesProveedor">-</span>
+                                </div>
+                                <div class="spec-item" id="stockInfo" style="display: none;">
+                                    <label>Stock Actual:</label>
+                                    <span id="detallesStock">0</span>
+                                </div>
+                                <div class="spec-item" id="preciosInfo">
+                                    <label>Precios:</label>
+                                    <div id="detallesPrecios"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="historial-precios-section">
+                        <h4>Historial de Precios</h4>
+                        <div class="historial-precios" id="historialPrecios">
+                            <!-- Historial se carga dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-primary"
+                    onclick="inventarioManager.editProducto(inventarioManager.currentViewingProduct.id)">
+                    <i class="fas fa-edit"></i> Editar Producto
+                </button>
+                <button type="button" class="btn-secondary" id="closeDetallesBtn">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Agregar/Editar Tarjeta -->
+    <div id="tarjetaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="tarjetaModalTitle">Agregar Tarjeta</h3>
+                <span class="close" id="closeTarjetaModal">&times;</span>
+            </div>
+
+            <form id="tarjetaForm" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombreTarjeta">Nombre de la Tarjeta *</label>
+                        <input type="text" id="nombreTarjeta" required placeholder="Ej: Banamex Gold">
+                    </div>
+                    <div class="form-group">
+                        <label for="tipoTarjeta">Tipo de Tarjeta *</label>
+                        <select id="tipoTarjeta" required>
+                            <option value="">Seleccionar tipo...</option>
+                            <option value="credito">Crédito</option>
+                            <option value="debito">Débito</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="limiteCredito">Límite de Crédito</label>
+                        <input type="number" id="limiteCredito" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="ultimos4Digitos">Últimos 4 Dígitos</label>
+                        <input type="text" id="ultimos4Digitos" maxlength="4" placeholder="1234">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fechaCorte">Fecha de Corte</label>
+                        <input type="number" id="fechaCorte" min="1" max="31" placeholder="Día del mes (1-31)">
+                        <small class="form-help">Día del mes en que corta la tarjeta</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="diasPago">Días para Pago</label>
+                        <input type="number" id="diasPago" min="1" max="60" placeholder="20">
+                        <small class="form-help">Días después del corte para pagar</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="colorTarjeta">Color de la Tarjeta</label>
+                        <select id="colorTarjeta">
+                            <option value="blue">Azul</option>
+                            <option value="red">Rojo</option>
+                            <option value="green">Verde</option>
+                            <option value="purple">Morado</option>
+                            <option value="orange">Naranja</option>
+                            <option value="gray">Gris</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="tarjetaCancelBtn">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="tarjetaSaveBtn">
+                        <i class="fas fa-save"></i>
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Agregar/Editar Compra -->
+    <div id="compraModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="compraModalTitle">Agregar Compra</h3>
+                <span class="close" id="closeCompraModal">&times;</span>
+            </div>
+
+            <form id="compraForm" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombreProductoCompra">Nombre del Producto *</label>
+                        <input type="text" id="nombreProductoCompra" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaCompra">Fecha de Compra *</label>
+                        <input type="date" id="fechaCompra" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="costoTotalCompra">Costo Total *</label>
+                        <input type="number" id="costoTotalCompra" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cantidadCompra">Cantidad de Piezas *</label>
+                        <input type="number" id="cantidadCompra" min="1" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="costoUnitarioCompra">Costo Unitario (Calculado)</label>
+                        <input type="number" id="costoUnitarioCompra" step="0.01" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="categoriaCompra">Categoría</label>
+                        <select id="categoriaCompra">
+                            <option value="">Seleccionar categoría...</option>
+                            <option value="sublimacion">Sublimación</option>
+                            <option value="grabado_laser">Grabado Láser</option>
+                            <option value="publicidad">Publicidad</option>
+                            <option value="otros">Otros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="esMesesSinIntereses">
+                            Es a meses sin intereses
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row" id="mesesSinInteresesRow" style="display: none;">
+                    <div class="form-group">
+                        <label for="numeroMeses">Número de Meses</label>
+                        <select id="numeroMeses">
+                            <option value="">Seleccionar...</option>
+                            <option value="3">3 meses</option>
+                            <option value="6">6 meses</option>
+                            <option value="9">9 meses</option>
+                            <option value="12">12 meses</option>
+                            <option value="18">18 meses</option>
+                            <option value="24">24 meses</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pagoMensual">Pago Mensual (Calculado)</label>
+                        <input type="number" id="pagoMensual" step="0.01" readonly>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="notasCompra">Notas</label>
+                        <textarea id="notasCompra" rows="3"
+                            placeholder="Notas adicionales sobre la compra..."></textarea>
+                    </div>
+                </div>
+
+                <input type="hidden" id="tarjetaIdCompra">
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="compraCancelBtn">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="compraSaveBtn">
+                        <i class="fas fa-save"></i>
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Compras de Tarjeta -->
+    <div id="comprasTarjetaModal" class="modal-compras-tarjeta">
+        <div class="modal-compras-content">
+            <div class="modal-compras-header">
+                <h3 id="comprasTarjetaTitle">Compras de Tarjeta</h3>
+                <span class="close" id="closeComprasTarjetaModal">&times;</span>
+            </div>
+
+            <div class="modal-compras-body">
+                <div class="tarjeta-info-modal" id="tarjetaInfoModal">
+                    <!-- Info de la tarjeta se carga dinámicamente -->
+                </div>
+
+                <div class="tarjeta-stats" id="tarjetaStatsModal">
+                    <!-- Estadísticas se cargan dinámicamente -->
+                </div>
+
+                <div class="compras-list-modal">
+                    <div class="compras-list-header">
+                        <h4>Historial de Compras</h4>
+                        <button class="btn-primary"
+                            onclick="comprasManager.openCompraModal(null, comprasManager.currentTarjetaModal.id)">
+                            <i class="fas fa-plus"></i> Nueva Compra
+                        </button>
+                    </div>
+                    <div id="comprasListContent">
+                        <!-- Lista de compras se carga dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/inventario.js"></script>
+    <script src="js/compras.js"></script>
 </body>
 
 </html>

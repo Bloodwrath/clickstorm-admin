@@ -1786,11 +1786,137 @@ body {
 }
 
 /* MODALES MEJORADOS PARA COMPRAS */
+/* Estandarizamos TODOS los modales */
 #tarjetaModal .modal-content,
-#compraModal .modal-content {
+#compraModal .modal-content,
+#productoModal .modal-content,
+#clienteModal .modal-content,
+#proveedorModal .modal-content,
+#pedidoModal .modal-content {
     background: linear-gradient(145deg, #ffffff, #f8f9fa);
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+/* Header de todos los modales */
+#tarjetaModal .modal-header,
+#compraModal .modal-header,
+#productoModal .modal-header,
+#clienteModal .modal-header,
+#proveedorModal .modal-header,
+#pedidoModal .modal-header {
+    background: linear-gradient(135deg, var(--azul-fuerte), var(--azul-cielo));
+    color: white;
+    border-bottom: none;
+}
+
+#tarjetaModal .modal-header h3,
+#compraModal .modal-header h3,
+#productoModal .modal-header h3,
+#clienteModal .modal-header h3,
+#proveedorModal .modal-header h3,
+#pedidoModal .modal-header h3 {
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    font-weight: 600;
+}
+
+/* Close general */
+#tarjetaModal .close,
+#compraModal .close,
+#productoModal .close,
+#clienteModal .close,
+#proveedorModal .close,
+#pedidoModal .close {
+    color: white;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+#tarjetaModal .close:hover,
+#compraModal .close:hover,
+#productoModal .close:hover,
+#clienteModal .close:hover,
+#proveedorModal .close:hover,
+#pedidoModal .close:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Controles de formulario en todos los modales */
+#tarjetaModal .form-group input,
+#tarjetaModal .form-group select,
+#compraModal .form-group input,
+#compraModal .form-group select,
+#compraModal .form-group textarea,
+#productoModal .form-group input,
+#productoModal .form-group select,
+#productoModal .form-group textarea,
+#clienteModal .form-group input,
+#clienteModal .form-group select,
+#clienteModal .form-group textarea,
+#proveedorModal .form-group input,
+#proveedorModal .form-group select,
+#proveedorModal .form-group textarea,
+#pedidoModal .form-group input,
+#pedidoModal .form-group select,
+#pedidoModal .form-group textarea {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+#tarjetaModal .form-group input:focus,
+#tarjetaModal .form-group select:focus,
+#compraModal .form-group input:focus,
+#compraModal .form-group select:focus,
+#compraModal .form-group textarea:focus,
+#productoModal .form-group input:focus,
+#productoModal .form-group select:focus,
+#productoModal .form-group textarea:focus,
+#clienteModal .form-group input:focus,
+#clienteModal .form-group select:focus,
+#clienteModal .form-group textarea:focus,
+#proveedorModal .form-group input:focus,
+#proveedorModal .form-group select:focus,
+#proveedorModal .form-group textarea:focus,
+#pedidoModal .form-group input:focus,
+#pedidoModal .form-group select:focus,
+#pedidoModal .form-group textarea:focus {
+    border-color: var(--azul-fuerte);
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 144, 255, 0.15);
+}
+
+/* Botones uniformes */
+#tarjetaModal .btn-primary,
+#compraModal .btn-primary,
+#productoModal .btn-primary,
+#clienteModal .btn-primary,
+#proveedorModal .btn-primary,
+#pedidoModal .btn-primary {
+    background: linear-gradient(45deg, var(--azul-fuerte), var(--azul-cielo));
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 6px 20px rgba(30, 144, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#tarjetaModal .btn-primary:hover,
+#compraModal .btn-primary:hover,
+#productoModal .btn-primary:hover,
+#clienteModal .btn-primary:hover,
+#proveedorModal .btn-primary:hover,
+#pedidoModal .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(30, 144, 255, 0.4);
 }
 
 #tarjetaModal .modal-header,
@@ -2543,4 +2669,212 @@ body {
     .compras-filters .search-input {
         max-width: 100%;
     }
+}
+
+/* Estilos para pagos múltiples en el calendario */
+
+.payment-multiple {
+    background: linear-gradient(135deg, var(--amarillo-warning), #ffcd3c) !important;
+    color: #856404 !important;
+    text-align: center !important;
+    padding: 4px 6px !important;
+    border-radius: 6px !important;
+    border-left: 3px solid #d4a843 !important;
+}
+
+.payment-multiple strong {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.payment-multiple small {
+    font-size: 0.6rem;
+    opacity: 0.8;
+    display: block;
+    margin-top: 1px;
+}
+
+/* Mejorar el tooltip para múltiples pagos */
+.payment-item[title] {
+    cursor: help;
+}
+
+.payment-multiple:hover {
+    transform: scale(1.05);
+    z-index: 10;
+    position: relative;
+}
+
+/* Estilos para detalles del día */
+.day-details-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.day-details-modal {
+    background: white;
+    border-radius: 15px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.day-details-header {
+    background: var(--azul-fuerte);
+    color: white;
+    padding: 20px;
+    border-radius: 15px 15px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.day-details-header h3 {
+    margin: 0;
+}
+
+.day-details-header .close {
+    font-size: 28px;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.day-details-header .close:hover {
+    opacity: 1;
+}
+
+.day-details-content {
+    padding: 20px;
+}
+
+.payment-detail {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid var(--azul-fuerte);
+}
+
+.payment-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.payment-amount {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--azul-fuerte);
+}
+
+.payment-breakdown {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #dee2e6;
+}
+
+.payment-breakdown h5 {
+    margin: 0 0 10px 0;
+    color: var(--gris-oscuro);
+    font-size: 0.9rem;
+}
+
+.compra-breakdown-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+}
+
+.compra-breakdown-item:last-child {
+    border-bottom: none;
+}
+
+.corte-detail {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    color: #856404;
+}
+
+.calendario-day {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.calendario-day:hover {
+    transform: scale(1.05);
+}
+
+/* Botones pequeños para editar/eliminar */
+.compra-actions-modal {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.btn-edit-small,
+.btn-delete-small {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-edit-small {
+    background: var(--amarillo-warning);
+    color: var(--gris-oscuro);
+}
+
+.btn-edit-small:hover {
+    background: #E0A800;
+    transform: translateY(-2px);
+}
+
+.btn-delete-small {
+    background: var(--rojo-error);
+    color: white;
+}
+
+.btn-delete-small:hover {
+    background: #C82333;
+    transform: translateY(-2px);
+}
+
+/* Estilos específicos para resultados de búsqueda en pedidos */
+#pedidoModal .search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--blanco);
+    border: 1px solid #DDD;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 2000;
+    /* más alto para que salga encima del modal */
 }

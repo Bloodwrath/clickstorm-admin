@@ -71,12 +71,13 @@ class ClientesManager {
         return chunks.join('');
     }
 
-    // Función para comprimir imagen antes de convertir a base64
+    // Función para comprimir imagen antes de convertir a base64 (con revoke del ObjectURL)
     compressImage(file, maxWidth = 800, quality = 0.8) {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const img = new Image();
+            const objectURL = URL.createObjectURL(file);
 
             img.onload = () => {
                 // Calcular nuevas dimensiones manteniendo aspecto
@@ -94,10 +95,16 @@ class ClientesManager {
 
                 // Convertir a base64 con calidad especificada
                 const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                URL.revokeObjectURL(objectURL);
                 resolve(compressedBase64);
             };
 
-            img.src = URL.createObjectURL(file);
+            img.onerror = () => {
+                URL.revokeObjectURL(objectURL);
+                resolve(null);
+            };
+
+            img.src = objectURL;
         });
     }
 
@@ -160,6 +167,9 @@ class ClientesManager {
 
                 // Comprimir imagen
                 const compressedBase64 = await this.compressImage(file);
+                if (!compressedBase64) {
+                    throw new Error('No se pudo procesar la imagen');
+                }
 
                 // Dividir en chunks
                 this.currentImageChunks = this.divideImageIntoChunks(compressedBase64);
@@ -268,10 +278,12 @@ class ClientesManager {
 
     renderClientes(filter = '') {
         const grid = document.getElementById('clientesGrid');
+        const term = (filter || '').toLowerCase().trim();
+
         const filteredClientes = this.clientes.filter(cliente =>
-            cliente.nombreCliente.toLowerCase().includes(filter.toLowerCase()) ||
-            cliente.telefono.includes(filter) ||
-            (cliente.correo && cliente.correo.toLowerCase().includes(filter.toLowerCase()))
+            (cliente.nombreCliente || '').toLowerCase().includes(term) ||
+            (cliente.telefono || '').toLowerCase().includes(term) ||
+            (cliente.correo || '').toLowerCase().includes(term)
         );
 
         if (filteredClientes.length === 0) {
@@ -279,7 +291,7 @@ class ClientesManager {
                 <div class="empty-state">
                     <i class="fas fa-users" style="font-size: 3rem; color: var(--gris-medio); margin-bottom: 1rem;"></i>
                     <p>No hay clientes registrados</p>
-                    ${filter ? '<p>Prueba con otro término de búsqueda</p>' : '<p>Comienza agregando tu primer cliente</p>'}
+                    ${term ? '<p>Prueba con otro término de búsqueda</p>' : '<p>Comienza agregando tu primer cliente</p>'}
                 </div>
             `;
             return;
@@ -300,12 +312,12 @@ class ClientesManager {
                 <div class="cliente-header">
                     <div class="cliente-photo">
                         ${imageSrc ?
-                `<img src="${imageSrc}" alt="${cliente.nombreCliente}">` :
+                `<img src="${imageSrc}" alt="${cliente.nombreCliente || 'Cliente'}">` :
                 '<i class="fas fa-user"></i>'
             }
                     </div>
                     <div class="cliente-info">
-                        <h4>${cliente.nombreCliente}</h4>
+                        <h4>${cliente.nombreCliente || 'Sin nombre'}</h4>
                     </div>
                 </div>
                 
@@ -313,7 +325,7 @@ class ClientesManager {
                     <div class="cliente-contact">
                         <div>
                             <i class="fas fa-phone"></i>
-                            <span>${cliente.telefono}</span>
+                            <span>${cliente.telefono || '-'}</span>
                         </div>
                         ${cliente.correo ? `
                             <div>
@@ -325,13 +337,13 @@ class ClientesManager {
                 </div>
                 
                 <div class="cliente-actions">
-                    <button class="btn-whatsapp" onclick="clientesManager.sendWhatsApp('${cliente.telefono}', '${cliente.nombreCliente}')">
+                    <button class="btn-whatsapp" onclick="clientesManager.sendWhatsApp('${(cliente.telefono || '').replace(/'/g, "\\'")}', '${(cliente.nombreCliente || '').replace(/'/g, "\\'")}')">
                         <i class="fab fa-whatsapp"></i> WhatsApp
                     </button>
                     <button class="btn-edit" onclick="clientesManager.editCliente('${cliente.id}')">
                         <i class="fas fa-edit"></i> Editar
                     </button>
-                    <button class="btn-delete" onclick="clientesManager.deleteCliente('${cliente.id}', '${cliente.nombreCliente}')">
+                    <button class="btn-delete" onclick="clientesManager.deleteCliente('${cliente.id}', '${(cliente.nombreCliente || '').replace(/'/g, "\\'")}')">
                         <i class="fas fa-trash"></i> Eliminar
                     </button>
                 </div>
@@ -365,7 +377,7 @@ class ClientesManager {
 
     sendWhatsApp(telefono, nombreCliente) {
         // Limpiar el número de teléfono (quitar espacios, guiones, etc.)
-        let cleanPhone = telefono.replace(/\D/g, '');
+        let cleanPhone = (telefono || '').replace(/\D/g, '');
 
         // Si el número no empieza con código de país, agregar el de México (+52)
         if (!cleanPhone.startsWith('52') && cleanPhone.length === 10) {
@@ -373,7 +385,7 @@ class ClientesManager {
         }
 
         // Mensaje predeterminado
-        const mensaje = `Hola ${nombreCliente}! Somos de Click Storm. Nos gustaría contactarte para ofrecerte nuestros servicios de publicidad, grabado láser y sublimación.`;
+        const mensaje = `Hola ${nombreCliente || ''}! Somos de Click Storm. Nos gustaría contactarte para ofrecerte nuestros servicios de publicidad, grabado láser y sublimación.`;
 
         // Codificar el mensaje para URL
         const mensajeCodificado = encodeURIComponent(mensaje);
@@ -386,11 +398,21 @@ class ClientesManager {
     }
 
     showSuccessMessage(message) {
-        alert(message);
+        const msg = document.createElement('div');
+        msg.className = 'modal-indicator';
+        msg.style.background = 'var(--verde-exito)';
+        msg.textContent = message;
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
     }
 
     showErrorMessage(message) {
-        alert(message);
+        const msg = document.createElement('div');
+        msg.className = 'modal-indicator';
+        msg.style.background = 'var(--rojo-error)';
+        msg.textContent = message;
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
     }
 }
 

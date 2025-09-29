@@ -216,15 +216,89 @@
             <section id="pedidos-section" class="content-section">
                 <div class="section-header">
                     <h2>Gestión de Pedidos</h2>
-                    <button class="btn-primary">
+                    <button class="btn-primary" id="addPedidoBtn">
                         <i class="fas fa-plus"></i>
                         Nuevo Pedido
                     </button>
                 </div>
-                <div class="content-placeholder">
-                    <p>Módulo de pedidos en desarrollo...</p>
+                <div class="pedidos-container">
+                    <div id="pedidosGrid">
+                        <!-- Pedidos cargados aquí -->
+                    </div>
                 </div>
             </section>
+
+            <!-- Modal Pedido -->
+            <div id="pedidoModal" class="modal">
+                <div class="modal-content modal-large">
+                    <div class="modal-header">
+                        <h3 id="pedidoModalTitle">Nuevo Pedido</h3>
+                        <span class="close" id="closePedidoModal">&times;</span>
+                    </div>
+                    <form id="pedidoForm" class="modal-form">
+
+                        <!-- Cliente -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pedidoCliente">Cliente *</label>
+                                <select id="pedidoCliente" required></select>
+                            </div>
+                        </div>
+
+                        <!-- Productos -->
+                        <div class="form-row" style="position: relative;">
+                            <div class="form-group" style="width:100%;">
+                                <label for="searchProductosPedido">Agregar Productos</label>
+                                <input type="text" id="searchProductosPedido"
+                                    placeholder="Buscar producto o materia prima...">
+                                <!-- Dropdown dinámico aquí -->
+                                <div id="productosPedidoResults" class="search-results"></div>
+                            </div>
+                        </div>
+
+                        <div id="carritoPedido" class="carrito-materias"></div>
+
+                        <!-- Producción -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Tiempo Total de Producción Estimado</label>
+                                <div id="tiempoProduccionTotal">0 días 0 horas</div>
+                            </div>
+                        </div>
+
+                        <!-- Entrega -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fechaEntregaPedido">Fecha de Entrega</label>
+                                <input type="date" id="fechaEntregaPedido" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="costoEntrega">Costo de Entrega</label>
+                                <input type="number" id="costoEntrega" min="0" step="0.01">
+                            </div>
+                        </div>
+
+                        <!-- Notas -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pedidoNotas">Notas</label>
+                                <textarea id="pedidoNotas" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="direccionEntrega">Dirección de Entrega</label>
+                                <textarea id="direccionEntrega" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="btn-secondary" id="pedidoCancelBtn">Cancelar</button>
+                            <button type="submit" class="btn-primary" id="pedidoSaveBtn">
+                                <i class="fas fa-save"></i> Guardar Pedido
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <!-- Compras Section -->
             <section id="compras-section" class="content-section">
@@ -562,6 +636,17 @@
                         </div>
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tiempoProduccionDias">Tiempo de Producción (Días)</label>
+                            <input type="number" id="tiempoProduccionDias" min="0" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="tiempoProduccionHoras">Tiempo de Producción (Horas)</label>
+                            <input type="number" id="tiempoProduccionHoras" min="0" step="1">
+                        </div>
+                    </div>
+
                     <div class="materias-primas-section">
                         <h5>Materias Primas que lo Componen</h5>
                         <div class="search-materia-prima">
@@ -870,6 +955,7 @@
 
     <script src="js/inventario.js"></script>
     <script src="js/compras.js"></script>
+    <script src="js/pedidos.js"></script>
 </body>
 
 </html>

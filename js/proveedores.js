@@ -71,12 +71,13 @@ class ProveedoresManager {
         return chunks.join('');
     }
 
-    // Función para comprimir imagen antes de convertir a base64
+    // Función para comprimir imagen antes de convertir a base64 (con revoke del ObjectURL)
     compressImage(file, maxWidth = 800, quality = 0.8) {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const img = new Image();
+            const objectURL = URL.createObjectURL(file);
 
             img.onload = () => {
                 // Calcular nuevas dimensiones manteniendo aspecto
@@ -94,10 +95,16 @@ class ProveedoresManager {
 
                 // Convertir a base64 con calidad especificada
                 const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                URL.revokeObjectURL(objectURL);
                 resolve(compressedBase64);
             };
 
-            img.src = URL.createObjectURL(file);
+            img.onerror = () => {
+                URL.revokeObjectURL(objectURL);
+                resolve(null);
+            };
+
+            img.src = objectURL;
         });
     }
 
@@ -164,6 +171,9 @@ class ProveedoresManager {
 
                 // Comprimir imagen
                 const compressedBase64 = await this.compressImage(file);
+                if (!compressedBase64) {
+                    throw new Error('No se pudo procesar la imagen');
+                }
 
                 // Dividir en chunks
                 this.currentImageChunks = this.divideImageIntoChunks(compressedBase64);
@@ -276,10 +286,12 @@ class ProveedoresManager {
 
     renderProveedores(filter = '') {
         const grid = document.getElementById('proveedoresGrid');
+        const term = (filter || '').toLowerCase().trim();
+
         const filteredProveedores = this.proveedores.filter(proveedor =>
-            proveedor.nombreNegocio.toLowerCase().includes(filter.toLowerCase()) ||
-            (proveedor.nombreProveedor && proveedor.nombreProveedor.toLowerCase().includes(filter.toLowerCase())) ||
-            proveedor.descripcion.toLowerCase().includes(filter.toLowerCase())
+            (proveedor.nombreNegocio || '').toLowerCase().includes(term) ||
+            (proveedor.nombreProveedor || '').toLowerCase().includes(term) ||
+            (proveedor.descripcion || '').toLowerCase().includes(term)
         );
 
         if (filteredProveedores.length === 0) {
@@ -287,7 +299,7 @@ class ProveedoresManager {
                 <div class="empty-state">
                     <i class="fas fa-truck" style="font-size: 3rem; color: var(--gris-medio); margin-bottom: 1rem;"></i>
                     <p>No hay proveedores registrados</p>
-                    ${filter ? '<p>Prueba con otro término de búsqueda</p>' : '<p>Comienza agregando tu primer proveedor</p>'}
+                    ${term ? '<p>Prueba con otro término de búsqueda</p>' : '<p>Comienza agregando tu primer proveedor</p>'}
                 </div>
             `;
             return;
@@ -313,7 +325,7 @@ class ProveedoresManager {
             }
                     </div>
                     <div class="proveedor-info">
-                        <h4>${proveedor.nombreNegocio}</h4>
+                        <h4>${proveedor.nombreNegocio || 'Sin nombre'}</h4>
                         ${proveedor.nombreProveedor ? `<p>${proveedor.nombreProveedor}</p>` : ''}
                     </div>
                 </div>
@@ -322,7 +334,7 @@ class ProveedoresManager {
                     <div class="proveedor-contact">
                         <div>
                             <i class="fas fa-phone"></i>
-                            <span>${proveedor.telefono}</span>
+                            <span>${proveedor.telefono || '-'}</span>
                         </div>
                         ${proveedor.correo ? `
                             <div>
@@ -333,28 +345,28 @@ class ProveedoresManager {
                         ${proveedor.sitioWeb ? `
                             <div>
                                 <i class="fas fa-globe"></i>
-                                <a href="${proveedor.sitioWeb}" target="_blank">${proveedor.sitioWeb}</a>
+                                <a href="${proveedor.sitioWeb}" target="_blank" rel="noopener noreferrer">${proveedor.sitioWeb}</a>
                             </div>
                         ` : ''}
                         <div>
                             <i class="fas fa-map-marker-alt"></i>
-                            <span>${proveedor.direccion}</span>
+                            <span>${proveedor.direccion || '-'}</span>
                         </div>
                     </div>
                     
                     <div class="proveedor-description">
-                        <strong>Provee:</strong> ${proveedor.descripcion}
+                        <strong>Provee:</strong> ${proveedor.descripcion || '-'}
                     </div>
                 </div>
                 
-                                <div class="proveedor-actions">
-                    <button class="btn-whatsapp" onclick="proveedoresManager.sendWhatsApp('${proveedor.telefono}', '${proveedor.nombreNegocio}')">
+                <div class="proveedor-actions">
+                    <button class="btn-whatsapp" onclick="proveedoresManager.sendWhatsApp('${(proveedor.telefono || '').replace(/'/g, "\\'")}', '${(proveedor.nombreNegocio || '').replace(/'/g, "\\'")}')">
                         <i class="fab fa-whatsapp"></i> WhatsApp
                     </button>
                     <button class="btn-edit" onclick="proveedoresManager.editProveedor('${proveedor.id}')">
                         <i class="fas fa-edit"></i> Editar
                     </button>
-                    <button class="btn-delete" onclick="proveedoresManager.deleteProveedor('${proveedor.id}', '${proveedor.nombreNegocio}')">
+                    <button class="btn-delete" onclick="proveedoresManager.deleteProveedor('${proveedor.id}', '${(proveedor.nombreNegocio || '').replace(/'/g, "\\'")}')">
                         <i class="fas fa-trash"></i> Eliminar
                     </button>
                 </div>
@@ -387,17 +399,26 @@ class ProveedoresManager {
     }
 
     showSuccessMessage(message) {
-        // Puedes implementar un sistema de notificaciones más sofisticado
-        alert(message);
+        const msg = document.createElement('div');
+        msg.className = 'modal-indicator';
+        msg.style.background = 'var(--verde-exito)';
+        msg.textContent = message;
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
     }
 
     showErrorMessage(message) {
-        alert(message);
+        const msg = document.createElement('div');
+        msg.className = 'modal-indicator';
+        msg.style.background = 'var(--rojo-error)';
+        msg.textContent = message;
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
     }
 
     sendWhatsApp(telefono, nombreNegocio) {
         // Limpiar el número de teléfono (quitar espacios, guiones, etc.)
-        let cleanPhone = telefono.replace(/\D/g, '');
+        let cleanPhone = (telefono || '').replace(/\D/g, '');
 
         // Si el número no empieza con código de país, agregar el de México (+52)
         if (!cleanPhone.startsWith('52') && cleanPhone.length === 10) {

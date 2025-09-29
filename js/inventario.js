@@ -161,11 +161,13 @@ class InventarioManager {
         return chunks.join('');
     }
 
+    // Comprimir imagen con revoke de ObjectURL
     compressImage(file, maxWidth = 800, quality = 0.8) {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const img = new Image();
+            const objectURL = URL.createObjectURL(file);
 
             img.onload = () => {
                 let { width, height } = img;
@@ -179,10 +181,16 @@ class InventarioManager {
                 ctx.drawImage(img, 0, 0, width, height);
 
                 const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                URL.revokeObjectURL(objectURL);
                 resolve(compressedBase64);
             };
 
-            img.src = URL.createObjectURL(file);
+            img.onerror = () => {
+                URL.revokeObjectURL(objectURL);
+                resolve(null);
+            };
+
+            img.src = objectURL;
         });
     }
 
@@ -197,6 +205,10 @@ class InventarioManager {
                 `;
 
                 const compressedBase64 = await this.compressImage(file);
+                if (!compressedBase64) {
+                    throw new Error('No se pudo procesar la imagen');
+                }
+
                 this.currentImageChunks = this.divideImageIntoChunks(compressedBase64);
                 this.showPhotoPreview(compressedBase64);
 
@@ -278,8 +290,6 @@ class InventarioManager {
             indicator.id = 'modalIndicator';
             indicator.innerHTML = '<i class="fas fa-info-circle"></i> Agregando proveedor...';
             document.body.appendChild(indicator);
-
-
 
             // Marcar que debemos restaurar el modal de producto
             this.shouldRestoreProductModal = true;
@@ -446,7 +456,7 @@ class InventarioManager {
         // Búsqueda flexible (no importa el orden de las palabras)
         const terms = searchTerm.toLowerCase().split(' ').filter(t => t.length > 0);
         const filtered = this.materiasPrimasDisponibles.filter(mp => {
-            const nombreCompleto = mp.nombreProducto.toLowerCase();
+            const nombreCompleto = (mp.nombreProducto || '').toLowerCase();
             return terms.every(term => nombreCompleto.includes(term));
         });
 
@@ -539,18 +549,61 @@ class InventarioManager {
 
     // Función placeholder para escáner de código de barras
     initBarcodeScanner() {
-        // Aquí se implementaría la funcionalidad del escáner
-        // Por ahora solo mostramos un alert
-        alert('Funcionalidad de escáner en desarrollo. Por ahora puedes escribir el código manualmente.');
-
-        // Implementación futura con QuaggaJS o similar:
-        /*
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            // Implementar escáner con cámara
-        } else {
-            alert('Tu navegador no soporta el acceso a la cámara');
+        if (!('BarcodeDetector' in window)) {
+            this.showErrorMessage("Tu navegador no soporta BarcodeDetector. Usa Chrome/Edge.");
+            return;
         }
-        */
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+            .then(stream => {
+                const video = document.createElement("video");
+                video.setAttribute("autoplay", true);
+                video.setAttribute("playsinline", true);
+                video.srcObject = stream;
+                video.style.width = "100%";
+                video.style.maxHeight = "300px";
+
+                // Contenedor flotante
+                const overlay = document.createElement("div");
+                overlay.className = "day-details-overlay";
+                overlay.innerHTML = `
+                <div class="day-details-modal">
+                    <div class="day-details-header">
+                        <h3>Escáner de Código de Barras</h3>
+                        <span class="close" style="cursor:pointer;">&times;</span>
+                    </div>
+                    <div class="day-details-content"></div>
+                </div>
+            `;
+                document.body.appendChild(overlay);
+                overlay.querySelector(".day-details-content").appendChild(video);
+
+                overlay.querySelector(".close").onclick = () => {
+                    stream.getTracks().forEach(track => track.stop());
+                    overlay.remove();
+                };
+
+                const detector = new BarcodeDetector({ formats: ["code_128", "ean_13", "ean_8", "qr_code"] });
+
+                const detectLoop = () => {
+                    detector.detect(video)
+                        .then(codes => {
+                            if (codes.length > 0) {
+                                document.getElementById("codigoBarras").value = codes[0].rawValue;
+                                this.showSuccessMessage(`Código detectado: ${codes[0].rawValue}`);
+                                stream.getTracks().forEach(track => track.stop());
+                                overlay.remove();
+                            }
+                        })
+                        .catch(err => console.error(err));
+                    requestAnimationFrame(detectLoop);
+                };
+                detectLoop();
+            })
+            .catch(err => {
+                console.error("No se pudo acceder a la cámara", err);
+                this.showErrorMessage("Error al iniciar cámara");
+            });
     }
 
     openModal(producto = null) {
@@ -651,27 +704,30 @@ class InventarioManager {
 
         try {
             const formData = this.getFormData();
+            const isNew = !this.editingId;
 
-            if (this.editingId) {
-                await this.updateProducto(this.editingId, formData);
+            let savedId;
+            if (isNew) {
+                savedId = await this.addProducto(formData);
             } else {
-                await this.addProducto(formData);
+                savedId = await this.updateProducto(this.editingId, formData);
             }
 
-            // Verificar si se debe agregar compra
-            const debeAgregarCompra = document.getElementById('agregarCompra').checked;
-            const esNuevoProducto = !this.editingId;
+            // Guardar historial si es materia prima y hubo compra (agregado de stock)
+            const shouldSaveHistorial = formData.tipoProducto === 'materia_prima' &&
+                formData.cantidadComprada && formData.costoTotal;
 
             this.closeModal();
             this.loadProductos();
             this.loadMateriasPrimas(); // Recargar materias primas
 
-            // Si es materia prima nueva y se marcó agregar compra
-            if (esNuevoProducto && debeAgregarCompra && formData.tipoProducto === 'materia_prima') {
-                // Guardar historial de precios
-                await this.saveHistorialPrecios(formData, null); // null porque es nuevo producto
+            if (shouldSaveHistorial) {
+                await this.saveHistorialPrecios(formData, savedId);
+            }
 
-                // Abrir modal de compras con datos precargados
+            // 🔥 Aquí reactivamos la integración con Compras
+            const debeAgregarCompra = document.getElementById('agregarCompra').checked;
+            if (isNew && debeAgregarCompra && formData.tipoProducto === 'materia_prima') {
                 setTimeout(() => {
                     if (window.comprasManager) {
                         window.comprasManager.openCompraFromProduct(formData);
@@ -680,7 +736,7 @@ class InventarioManager {
 
                 this.showSuccessMessage('Producto agregado correctamente. Abriendo formulario de compra...');
             } else {
-                this.showSuccessMessage(this.editingId ? 'Producto actualizado correctamente' : 'Producto agregado correctamente');
+                this.showSuccessMessage(isNew ? 'Producto agregado correctamente' : 'Producto actualizado correctamente');
             }
         } catch (error) {
             console.error('Error al guardar producto:', error);
@@ -718,12 +774,23 @@ class InventarioManager {
         if (tipoProducto === 'materia_prima') {
             const costoTotal = parseFloat(document.getElementById('costoTotal').value) || 0;
             const cantidadAgregar = parseInt(document.getElementById('cantidadAgregar').value) || 0;
-            const stockActual = parseInt(document.getElementById('stockActual').value) || 0;
 
-            data.costoTotal = costoTotal;
-            data.cantidadComprada = cantidadAgregar;
-            data.stockActual = this.editingId ? stockActual + cantidadAgregar : cantidadAgregar;
-            data.precioUnitario = costoTotal > 0 && cantidadAgregar > 0 ? costoTotal / cantidadAgregar : 0;
+            const existing = this.editingId ? this.productos.find(p => p.id === this.editingId) : null;
+            const stockBase = existing ? (existing.stockActual || 0) : 0;
+
+            // Actualizar stock sumando cantidad si se agregó
+            data.stockActual = stockBase + (cantidadAgregar > 0 ? cantidadAgregar : 0);
+
+            // Solo setear costo/cantidad/precio si es nuevo o si agregas stock ahora
+            if (!this.editingId || (cantidadAgregar > 0 && costoTotal > 0)) {
+                data.costoTotal = costoTotal;
+                data.cantidadComprada = cantidadAgregar;
+                data.precioUnitario = cantidadAgregar > 0 ? (costoTotal / cantidadAgregar)
+                    : (existing ? existing.precioUnitario || 0 : 0);
+            } else if (existing && typeof existing.precioUnitario === 'number') {
+                data.precioUnitario = existing.precioUnitario;
+            }
+
             data.costoMenudeo = parseFloat(document.getElementById('costoMenudeo').value) || null;
             data.costoMayoreo = parseFloat(document.getElementById('costoMayoreo').value) || null;
             data.esPersonalizable = document.getElementById('esPersonalizable').checked;
@@ -739,25 +806,32 @@ class InventarioManager {
             data.costoProduccion = this.carritoMateriasPrimas.reduce((sum, item) => {
                 return sum + (item.precioUnitario * item.cantidad);
             }, 0);
+
+            // 👉 Agregar tiempo de producción
+            data.tiempoProduccion = {
+                dias: parseInt(document.getElementById('tiempoProduccionDias').value) || 0,
+                horas: parseInt(document.getElementById('tiempoProduccionHoras').value) || 0
+            };
         }
 
         return data;
     }
 
     async addProducto(productoData) {
-        await db.collection('productos').add(productoData);
+        const docRef = await db.collection('productos').add(productoData);
+        return docRef.id;
     }
 
     async updateProducto(id, productoData) {
         await db.collection('productos').doc(id).update(productoData);
+        return id;
     }
-
 
     async saveHistorialPrecios(productoData, productoId) {
         if (productoData.tipoProducto === 'materia_prima' && productoData.costoTotal && productoData.cantidadComprada) {
             try {
                 const historialData = {
-                    productoId: productoId || 'nuevo', // Si es nuevo producto, se actualizará después
+                    productoId: productoId, // Usar el id real del producto
                     nombreProducto: productoData.nombreProducto,
                     costoTotal: productoData.costoTotal,
                     cantidad: productoData.cantidadComprada,
@@ -792,12 +866,12 @@ class InventarioManager {
     }
 
     filterProductos() {
-        const searchTerm = document.getElementById('searchInventario').value.toLowerCase();
+        const searchTerm = (document.getElementById('searchInventario').value || '').toLowerCase();
         const tipoFilter = document.getElementById('filterTipoProducto').value;
         const categoriaFilter = document.getElementById('filterCategoria').value;
 
         let filtered = this.productos.filter(producto => {
-            const matchesSearch = producto.nombreProducto.toLowerCase().includes(searchTerm) ||
+            const matchesSearch = (producto.nombreProducto || '').toLowerCase().includes(searchTerm) ||
                 (producto.codigoBarras && producto.codigoBarras.includes(searchTerm));
             const matchesTipo = !tipoFilter || producto.tipoProducto === tipoFilter;
             const matchesCategoria = !categoriaFilter || producto.categoria === categoriaFilter;
@@ -839,7 +913,7 @@ class InventarioManager {
 
         // Determinar estado del stock
         const stockClass = producto.tipoProducto === 'materia_prima' ?
-            (producto.stockActual <= 5 ? 'stock-low' : 'stock-normal') : '';
+            ((producto.stockActual || 0) <= 5 ? 'stock-low' : 'stock-normal') : '';
 
         // Información específica según el tipo
         let detallesEspecificos = '';
@@ -881,11 +955,11 @@ class InventarioManager {
                     </div>
                 </div>
                 
-                <div class="producto-actions">
-                    <button class="btn-edit" onclick="inventarioManager.editProducto('${producto.id}')">
+                <div class="producto-actions" onclick="event.stopPropagation()">
+                    <button class="btn-edit" onclick="event.stopPropagation(); inventarioManager.editProducto('${producto.id}')">
                         <i class="fas fa-edit"></i> Editar
                     </button>
-                    <button class="btn-delete" onclick="inventarioManager.deleteProducto('${producto.id}', '${producto.nombreProducto}')">
+                    <button class="btn-delete" onclick="event.stopPropagation(); inventarioManager.deleteProducto('${producto.id}', '${(producto.nombreProducto || '').replace(/'/g, "\\'")}')">
                         <i class="fas fa-trash"></i> Eliminar
                     </button>
                 </div>
@@ -924,11 +998,21 @@ class InventarioManager {
     }
 
     showSuccessMessage(message) {
-        alert(message);
+        const msg = document.createElement('div');
+        msg.className = 'modal-indicator';
+        msg.style.background = 'var(--verde-exito)';
+        msg.textContent = message;
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
     }
 
     showErrorMessage(message) {
-        alert(message);
+        const msg = document.createElement('div');
+        msg.className = 'modal-indicator';
+        msg.style.background = 'var(--rojo-error)';
+        msg.textContent = message;
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
     }
 
     // Funciones para modal de detalles
@@ -1006,7 +1090,7 @@ class InventarioManager {
             } else {
                 querySnapshot.forEach((doc) => {
                     const historial = doc.data();
-                    const fecha = historial.fechaCompra.toDate ? historial.fechaCompra.toDate() : new Date(historial.fechaCompra);
+                    const fecha = historial.fechaCompra && historial.fechaCompra.toDate ? historial.fechaCompra.toDate() : new Date(historial.fechaCompra);
                     const fechaFormateada = fecha.toLocaleDateString('es-MX');
 
                     const precioUnitario = historial.costoTotal && historial.cantidad ?
@@ -1033,6 +1117,32 @@ class InventarioManager {
             document.getElementById('historialPrecios').innerHTML = '<p style="color: var(--rojo-error);">Error al cargar historial</p>';
         }
     }
+
+    // 🔻 Consumo automático del stock de materias primas al vender un producto
+    async consumirStockMateriasPrimas(productoId, cantidadVendida) {
+        try {
+            const producto = this.productos.find(p => p.id === productoId);
+            if (!producto || producto.tipoProducto !== 'producto_venta') return;
+
+            if (!producto.materiasPrimas || producto.materiasPrimas.length === 0) return;
+
+            for (let item of producto.materiasPrimas) {
+                const materia = this.productos.find(p => p.id === item.id);
+                if (materia && materia.tipoProducto === "materia_prima") {
+                    const nuevoStock = Math.max(0, (materia.stockActual || 0) - (item.cantidad * cantidadVendida));
+                    await db.collection("productos").doc(materia.id).update({ stockActual: nuevoStock });
+                    console.log(`Restado ${item.cantidad * cantidadVendida} de ${materia.nombreProducto}`);
+                }
+            }
+
+            this.loadProductos(); // Refrescar UI
+            this.showSuccessMessage("Stock de materias primas actualizado automáticamente");
+        } catch (error) {
+            console.error("Error al consumir stock:", error);
+            this.showErrorMessage("Error al consumir stock de materias primas");
+        }
+    }
+
 }
 
 // Inicializar el gestor de inventario

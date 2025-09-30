@@ -9,7 +9,6 @@ class InventarioManager {
         this.currentImageChunks = null;
         this.shouldRestoreProductModal = false; // Para controlar la restauración del modal
         this.currentViewingProduct = null; // Producto que se está viendo en detalles
-
         // Definir subcategorías por categoría
         this.subcategorias = {
             sublimacion: [
@@ -37,6 +36,12 @@ class InventarioManager {
     }
 
     initializeEventListeners() {
+
+        // Form reabastecer
+        document.getElementById("reabastecerForm").addEventListener("submit", (e) => this.handleReabastecerSubmit(e));
+        document.getElementById("costoTotalReabastecimiento").addEventListener("input", () => this.updateUnitPriceReabastecimiento());
+        document.getElementById("cantidadReabastecimiento").addEventListener("input", () => this.updateUnitPriceReabastecimiento());
+
         // Botón agregar producto
         document.getElementById('addProductoBtn').addEventListener('click', () => {
             this.openModal();
@@ -200,9 +205,9 @@ class InventarioManager {
             try {
                 const preview = document.getElementById('productoFotoPreview');
                 preview.innerHTML = `
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span>Procesando imagen...</span>
-                `;
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Procesando imagen...</span>
+            `;
 
                 const compressedBase64 = await this.compressImage(file);
                 if (!compressedBase64) {
@@ -229,9 +234,9 @@ class InventarioManager {
     resetPhotoPreview() {
         const preview = document.getElementById('productoFotoPreview');
         preview.innerHTML = `
-            <i class="fas fa-camera"></i>
-            <span>Subir foto</span>
-        `;
+        <i class="fas fa-camera"></i>
+        <span>Subir foto</span>
+    `;
     }
 
     // Cargar proveedores para el dropdown
@@ -259,9 +264,9 @@ class InventarioManager {
 
         // Limpiar opciones excepto las por defecto
         select.innerHTML = `
-            <option value="">Seleccionar proveedor...</option>
-            <option value="agregar_nuevo">+ Agregar nuevo proveedor</option>
-        `;
+        <option value="">Seleccionar proveedor...</option>
+        <option value="agregar_nuevo">+ Agregar nuevo proveedor</option>
+    `;
 
         // Agregar proveedores
         this.proveedores.forEach(proveedor => {
@@ -464,11 +469,11 @@ class InventarioManager {
             resultsDiv.innerHTML = '<div class="search-result-item">No se encontraron materias primas</div>';
         } else {
             resultsDiv.innerHTML = filtered.map(mp => `
-                <div class="search-result-item" onclick="inventarioManager.addMateriaPrimaToCarrito('${mp.id}')">
-                    <strong>${mp.nombreProducto}</strong>
-                    <br><small>Stock: ${mp.stockActual || 0} | Precio: $${mp.precioUnitario || 0}</small>
-                </div>
-            `).join('');
+            <div class="search-result-item" onclick="inventarioManager.addMateriaPrimaToCarrito('${mp.id}')">
+                <strong>${mp.nombreProducto}</strong>
+                <br><small>Stock: ${mp.stockActual || 0} | Precio: $${mp.precioUnitario || 0}</small>
+            </div>
+        `).join('');
         }
 
         resultsDiv.style.display = 'block';
@@ -511,20 +516,20 @@ class InventarioManager {
         }
 
         carritoDiv.innerHTML = this.carritoMateriasPrimas.map((item, index) => `
-            <div class="carrito-item">
-                <div class="carrito-item-info">
-                    <strong>${item.nombre}</strong>
-                    <br><small>$${item.precioUnitario} c/u</small>
-                </div>
-                <div class="carrito-item-controls">
-                    <input type="number" class="cantidad-input" value="${item.cantidad}" 
-                           min="1" onchange="inventarioManager.updateCantidadCarrito(${index}, this.value)">
-                    <button type="button" class="btn-remove" onclick="inventarioManager.removeFromCarrito(${index})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+        <div class="carrito-item">
+            <div class="carrito-item-info">
+                <strong>${item.nombre}</strong>
+                <br><small>$${item.precioUnitario} c/u</small>
             </div>
-        `).join('');
+            <div class="carrito-item-controls">
+                <input type="number" class="cantidad-input" value="${item.cantidad}" 
+                       min="1" onchange="inventarioManager.updateCantidadCarrito(${index}, this.value)">
+                <button type="button" class="btn-remove" onclick="inventarioManager.removeFromCarrito(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
     }
 
     updateCantidadCarrito(index, nuevaCantidad) {
@@ -567,14 +572,14 @@ class InventarioManager {
                 const overlay = document.createElement("div");
                 overlay.className = "day-details-overlay";
                 overlay.innerHTML = `
-                <div class="day-details-modal">
-                    <div class="day-details-header">
-                        <h3>Escáner de Código de Barras</h3>
-                        <span class="close" style="cursor:pointer;">&times;</span>
-                    </div>
-                    <div class="day-details-content"></div>
+            <div class="day-details-modal">
+                <div class="day-details-header">
+                    <h3>Escáner de Código de Barras</h3>
+                    <span class="close" style="cursor:pointer;">&times;</span>
                 </div>
-            `;
+                <div class="day-details-content"></div>
+            </div>
+        `;
                 document.body.appendChild(overlay);
                 overlay.querySelector(".day-details-content").appendChild(video);
 
@@ -648,6 +653,7 @@ class InventarioManager {
         document.getElementById('proveedorSelect').value = producto.proveedorId || '';
         document.getElementById('tipoProducto').value = producto.tipoProducto || '';
         document.getElementById('categoria').value = producto.categoria || '';
+        document.getElementById('cantidadMinimaMayoreo').value = producto.cantidadMinimaMayoreo || '';
 
         // Cargar subcategorías y seleccionar
         if (producto.categoria) {
@@ -803,6 +809,7 @@ class InventarioManager {
             data.precioMenudeo = parseFloat(document.getElementById('precioMenudeoVenta').value) || 0;
             data.precioMayoreo = parseFloat(document.getElementById('precioMayoreoVenta').value) || 0;
             data.materiasPrimas = this.carritoMateriasPrimas;
+            data.cantidadMinimaMayoreo = parseInt(document.getElementById('cantidadMinimaMayoreo').value) || 0;
             data.costoProduccion = this.carritoMateriasPrimas.reduce((sum, item) => {
                 return sum + (item.precioUnitario * item.cantidad);
             }, 0);
@@ -888,12 +895,12 @@ class InventarioManager {
 
         if (productos.length === 0) {
             grid.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-boxes" style="font-size: 3rem; color: var(--gris-medio); margin-bottom: 1rem;"></i>
-                    <p>No hay productos registrados</p>
-                    <p>Comienza agregando tu primer producto</p>
-                </div>
-            `;
+            <div class="empty-state">
+                <i class="fas fa-boxes" style="font-size: 3rem; color: var(--gris-medio); margin-bottom: 1rem;"></i>
+                <p>No hay productos registrados</p>
+                <p>Comienza agregando tu primer producto</p>
+            </div>
+        `;
             return;
         }
 
@@ -919,52 +926,55 @@ class InventarioManager {
         let detallesEspecificos = '';
         if (producto.tipoProducto === 'materia_prima') {
             detallesEspecificos = `
-                <div><strong>Stock:</strong> <span class="${stockClass}">${producto.stockActual || 0}</span></div>
-                <div><strong>Precio unitario:</strong> $${producto.precioUnitario || 0}</div>
-                ${producto.costoMenudeo ? `<div><strong>Menudeo:</strong> $${producto.costoMenudeo}</div>` : ''}
-                ${producto.costoMayoreo ? `<div><strong>Mayoreo:</strong> $${producto.costoMayoreo}</div>` : ''}
-            `;
+            <div><strong>Stock:</strong> <span class="${stockClass}">${producto.stockActual || 0}</span></div>
+            <div><strong>Precio unitario:</strong> $${producto.precioUnitario || 0}</div>
+            ${producto.costoMenudeo ? `<div><strong>Menudeo:</strong> $${producto.costoMenudeo}</div>` : ''}
+            ${producto.costoMayoreo ? `<div><strong>Mayoreo:</strong> $${producto.costoMayoreo}</div>` : ''}
+        `;
         } else if (producto.tipoProducto === 'producto_venta') {
             detallesEspecificos = `
-                <div><strong>Precio menudeo:</strong> $${producto.precioMenudeo || 0}</div>
-                <div><strong>Precio mayoreo:</strong> $${producto.precioMayoreo || 0}</div>
-                <div><strong>Costo producción:</strong> $${producto.costoProduccion || 0}</div>
-            `;
+            <div><strong>Precio menudeo:</strong> $${producto.precioMenudeo || 0}</div>
+            <div><strong>Precio mayoreo:</strong> $${producto.precioMayoreo || 0}</div>
+            <div><strong>Costo producción:</strong> $${producto.costoProduccion || 0}</div>
+        `;
         }
 
         return `
-            <div class="producto-card clickable-product" onclick="inventarioManager.openDetallesModal('${producto.id}')">
-                <div class="producto-header">
-                    ${imageSrc ?
+        <div class="producto-card clickable-product" onclick="inventarioManager.openDetallesModal('${producto.id}')">
+            <div class="producto-header">
+                ${imageSrc ?
                 `<img src="${imageSrc}" alt="${producto.nombreProducto}" class="producto-image">` :
                 '<i class="fas fa-cube producto-placeholder"></i>'
             }
-                    <div class="producto-tipo-badge ${producto.tipoProducto === 'materia_prima' ? 'badge-materia-prima' : 'badge-producto-venta'}">
-                        ${producto.tipoProducto === 'materia_prima' ? 'Materia Prima' : 'Producto de Venta'}
-                    </div>
-                </div>
-                
-                <div class="producto-info">
-                    <h4>${producto.nombreProducto}</h4>
-                    <div class="producto-categoria">${this.getCategoriaDisplay(producto.categoria)}</div>
-                    
-                    <div class="producto-details">
-                        ${producto.codigoBarras ? `<div><strong>Código:</strong> ${producto.codigoBarras}</div>` : ''}
-                        <div><strong>Proveedor:</strong> ${nombreProveedor}</div>
-                        ${detallesEspecificos}
-                    </div>
-                </div>
-                
-                <div class="producto-actions" onclick="event.stopPropagation()">
-                    <button class="btn-edit" onclick="event.stopPropagation(); inventarioManager.editProducto('${producto.id}')">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                    <button class="btn-delete" onclick="event.stopPropagation(); inventarioManager.deleteProducto('${producto.id}', '${(producto.nombreProducto || '').replace(/'/g, "\\'")}')">
-                        <i class="fas fa-trash"></i> Eliminar
-                    </button>
+                <div class="producto-tipo-badge ${producto.tipoProducto === 'materia_prima' ? 'badge-materia-prima' : 'badge-producto-venta'}">
+                    ${producto.tipoProducto === 'materia_prima' ? 'Materia Prima' : 'Producto de Venta'}
                 </div>
             </div>
-        `;
+            
+            <div class="producto-info">
+                <h4>${producto.nombreProducto}</h4>
+                <div class="producto-categoria">${this.getCategoriaDisplay(producto.categoria)}</div>
+                
+                <div class="producto-details">
+                    ${producto.codigoBarras ? `<div><strong>Código:</strong> ${producto.codigoBarras}</div>` : ''}
+                    <div><strong>Proveedor:</strong> ${nombreProveedor}</div>
+                    ${detallesEspecificos}
+                </div>
+            </div>
+            
+            <div class="producto-actions" onclick="event.stopPropagation()">
+                <button class="btn-edit" onclick="event.stopPropagation(); inventarioManager.editProducto('${producto.id}')">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+                <button class="btn-delete" onclick="event.stopPropagation(); inventarioManager.deleteProducto('${producto.id}', '${(producto.nombreProducto || '').replace(/'/g, "\\'")}')">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+                <button class="btn-secondary" onclick="event.stopPropagation(); inventarioManager.openReabastecerModal('${producto.id}')">
+                    <i class="fas fa-plus"></i> Reabastecer
+                </button>
+            </div>
+        </div>
+    `;
     }
 
     getCategoriaDisplay(categoria) {
@@ -984,17 +994,21 @@ class InventarioManager {
     }
 
     async deleteProducto(id, nombre) {
-        if (confirm(`¿Estás seguro de que quieres eliminar el producto "${nombre}"?`)) {
-            try {
-                await db.collection('productos').doc(id).delete();
-                this.loadProductos();
-                this.loadMateriasPrimas(); // Recargar materias primas
-                this.showSuccessMessage('Producto eliminado correctamente');
-            } catch (error) {
-                console.error('Error al eliminar producto:', error);
-                this.showErrorMessage('Error al eliminar el producto');
+        confirmDelete(
+            "producto",
+            `Se eliminará el producto "${nombre}".`,
+            async () => {
+                try {
+                    await db.collection("productos").doc(id).delete();
+                    this.loadProductos();
+                    this.loadMateriasPrimas();
+                    showSuccess("Eliminado", `El producto "${nombre}" ha sido eliminado.`);
+                } catch (error) {
+                    console.error("Error al eliminar producto:", error);
+                    showError("Error", "No se pudo eliminar el producto.");
+                }
             }
-        }
+        );
     }
 
     showSuccessMessage(message) {
@@ -1013,6 +1027,78 @@ class InventarioManager {
         msg.textContent = message;
         document.body.appendChild(msg);
         setTimeout(() => msg.remove(), 3000);
+    }
+
+    // Funciones para modal de reabastecimiento
+    openReabastecerModal(productoId) {
+        this.editingId = productoId;
+        document.getElementById("reabastecerForm").reset();
+        document.getElementById("precioUnitarioReabastecimiento").value = '';
+
+        // Cargar proveedores en el select
+        const sel = document.getElementById("proveedorReabastecimiento");
+        sel.innerHTML = '<option value="">Seleccionar proveedor...</option>';
+        this.proveedores.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.id;
+            opt.textContent = p.nombreNegocio;
+            sel.appendChild(opt);
+        });
+
+        // Mostrar modal
+        document.getElementById("reabastecerModal").style.display = "block";
+    }
+
+    closeReabastecerModal() {
+        document.getElementById("reabastecerModal").style.display = "none";
+        this.editingId = null;
+    }
+
+    // Calcular precio unitario cada vez que costo/cantidad cambien
+    updateUnitPriceReabastecimiento() {
+        const costo = parseFloat(document.getElementById('costoTotalReabastecimiento').value) || 0;
+        const cant = parseFloat(document.getElementById('cantidadReabastecimiento').value) || 0;
+        document.getElementById('precioUnitarioReabastecimiento').value = (cant > 0 ? (costo / cant).toFixed(2) : '');
+    }
+
+    async handleReabastecerSubmit(e) {
+        e.preventDefault();
+        if (!this.editingId) return;
+
+        const costoTotal = parseFloat(document.getElementById("costoTotalReabastecimiento").value);
+        const cantidad = parseInt(document.getElementById("cantidadReabastecimiento").value);
+        const proveedorId = document.getElementById("proveedorReabastecimiento").value;
+        const fechaCompra = new Date(document.getElementById("fechaCompraReabastecimiento").value);
+
+        const producto = this.productos.find(p => p.id === this.editingId);
+        const nuevoStock = (producto.stockActual || 0) + cantidad;
+
+        try {
+            // Actualizar stock del producto
+            await db.collection("productos").doc(this.editingId).update({
+                stockActual: nuevoStock,
+                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Guardar en historial de precios
+            await db.collection("historial_precios").add({
+                productoId: this.editingId,
+                nombreProducto: producto.nombreProducto,
+                proveedorId,
+                costoTotal,
+                cantidad,
+                precioUnitario: costoTotal / cantidad,
+                fechaCompra,
+                fechaCreacion: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            this.closeReabastecerModal();
+            this.loadProductos();
+            this.showSuccessMessage("Reabastecimiento registrado correctamente");
+        } catch (err) {
+            console.error("Error al reabastecer:", err);
+            this.showErrorMessage("Error al reabastecer producto");
+        }
     }
 
     // Funciones para modal de detalles
@@ -1097,17 +1183,17 @@ class InventarioManager {
                         (historial.costoTotal / historial.cantidad).toFixed(2) : 'N/A';
 
                     historialHTML += `
-                        <div class="historial-item">
-                            <div class="historial-item-header">
-                                <span class="historial-fecha">${fechaFormateada}</span>
-                            </div>
-                            <div class="historial-detalles">
-                                <div><span>Costo Total:</span><span>$${historial.costoTotal || 0}</span></div>
-                                <div><span>Cantidad:</span><span>${historial.cantidad || 0} piezas</span></div>
-                                <div><span>Precio Unitario:</span><span>$${precioUnitario}</span></div>
-                            </div>
+                    <div class="historial-item">
+                        <div class="historial-item-header">
+                            <span class="historial-fecha">${fechaFormateada}</span>
                         </div>
-                    `;
+                        <div class="historial-detalles">
+                            <div><span>Costo Total:</span><span>$${historial.costoTotal || 0}</span></div>
+                            <div><span>Cantidad:</span><span>${historial.cantidad || 0} piezas</span></div>
+                            <div><span>Precio Unitario:</span><span>$${precioUnitario}</span></div>
+                        </div>
+                    </div>
+                `;
                 });
             }
 
@@ -1142,7 +1228,6 @@ class InventarioManager {
             this.showErrorMessage("Error al consumir stock de materias primas");
         }
     }
-
 }
 
 // Inicializar el gestor de inventario

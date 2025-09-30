@@ -2,7 +2,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
     const errorMessage = document.getElementById('error-message');
-
     // Verificar si el usuario ya está autenticado
     auth.onAuthStateChanged(function (user) {
         if (user && window.location.pathname.includes('index.html')) {

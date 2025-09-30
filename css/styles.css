@@ -13,6 +13,7 @@
 }
 
 /* Reset y configuración base */
+
 * {
     margin: 0;
     padding: 0;
@@ -1785,8 +1786,8 @@ body {
     background: linear-gradient(45deg, #5a6268, var(--gris-medio));
 }
 
-/* MODALES MEJORADOS PARA COMPRAS */
-/* Estandarizamos TODOS los modales */
+/* MODALES MEJORADOS PARA COMPRAS /
+        / Estandarizamos TODOS los modales */
 #tarjetaModal .modal-content,
 #compraModal .modal-content,
 #productoModal .modal-content,
@@ -2877,4 +2878,189 @@ body {
     overflow-y: auto;
     z-index: 2000;
     /* más alto para que salga encima del modal */
+}
+
+/* === ESTILOS PARA PEDIDOS === */
+#pedidosGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.pedido-card {
+    background: var(--blanco);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-left: 6px solid var(--azul-fuerte);
+}
+
+.pedido-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+
+.pedido-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: var(--gris-claro);
+    border-bottom: 1px solid #e9ecef;
+}
+
+.pedido-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--azul-fuerte);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pedido-estado {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    text-transform: capitalize;
+}
+
+.pedido-body {
+    padding: 15px 20px;
+    flex-grow: 1;
+    display: grid;
+    gap: 10px;
+}
+
+.pedido-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--gris-oscuro);
+}
+
+.pedido-info i {
+    color: var(--azul-fuerte);
+    min-width: 20px;
+}
+
+.pedido-footer {
+    padding: 12px 20px;
+    display: flex;
+    gap: 12px;
+    border-top: 1px solid #e9ecef;
+    background: #fafafa;
+}
+
+/* === COLORES POR ESTADO === */
+.pedido-card.estado-pendiente {
+    border-left-color: var(--amarillo-warning);
+}
+
+.pedido-card.estado-en_produccion {
+    border-left-color: var(--azul-fuerte);
+}
+
+.pedido-card.estado-entregado {
+    border-left-color: var(--verde-exito);
+}
+
+.pedido-card.estado-cancelado {
+    border-left-color: var(--rojo-error);
+}
+
+.pedido-card.estado-pendiente .pedido-estado {
+    background: var(--amarillo-warning);
+    color: #856404;
+}
+
+.pedido-card.estado-en_produccion .pedido-estado {
+    background: var(--azul-cielo);
+    color: var(--azul-oscuro);
+}
+
+.pedido-card.estado-entregado .pedido-estado {
+    background: var(--verde-exito);
+    color: white;
+}
+
+.pedido-card.estado-cancelado .pedido-estado {
+    background: var(--rojo-error);
+    color: white;
+}
+
+/* === DETALLES DEL PEDIDO - AJUSTADO AL ESTILO GLOBAL === */
+#detallesPedidoModal .modal-content {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+#detallesPedidoModal .modal-header {
+    background: linear-gradient(135deg, var(--azul-fuerte), var(--azul-cielo));
+    color: white;
+    border-bottom: none;
+    padding: 20px;
+}
+
+#detallesPedidoModal .modal-header h3 {
+    color: white;
+    font-weight: 600;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* misma estructura que otros modales */
+#detallesPedidoModal .modal-form {
+    padding: 20px 25px;
+}
+
+.pedido-detalles-info .form-section {
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    border: 1px solid #E9ECEF;
+    border-radius: 8px;
+    background: #FAFBFC;
+}
+
+.pedido-detalles-info .form-section h4 {
+    margin: 0 0 10px 0;
+    color: var(--azul-fuerte);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pedido-detalles-info .form-section p {
+    margin: 0;
+    color: var(--gris-oscuro);
+}
+
+/* productos listados bonitos */
+.productos-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.producto-detalle {
+    padding: 10px 15px;
+    background: var(--blanco);
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s ease;
+}
+
+.producto-detalle:hover {
+    background: #f8f9fa;
 }

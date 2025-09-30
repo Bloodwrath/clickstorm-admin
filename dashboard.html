@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
 
 <head>
@@ -9,16 +10,12 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 
-<body class="dashboard-page">
-    <!-- Sidebar -->
+<body class="dashboard-page"> <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h2><i class="fas fa-bolt"></i> Click Storm</h2>
-            <button class="sidebar-toggle" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
+            <h2><i class="fas fa-bolt"></i> Click Storm</h2> <button class="sidebar-toggle" id="sidebarToggle"> <i
+                    class="fas fa-bars"></i> </button>
         </div>
-
         <ul class="sidebar-menu">
             <li class="menu-item active">
                 <a href="#dashboard" data-section="dashboard">
@@ -386,8 +383,20 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="telefono">Número Telefónico *</label>
-                        <input type="tel" id="telefono" required>
+                        <label>Números Telefónicos *</label>
+                        <div id="telefonosContainer">
+                            <div class="telefono-row">
+                                <input type="tel" placeholder="Número" required>
+                                <input type="text" placeholder="Nombre de contacto (opcional)">
+                                <button type="button" class="btn-remove"
+                                    onclick="proveedoresManager.removeTelefono(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-secondary" onclick="proveedoresManager.addTelefono()">
+                            <i class="fas fa-plus"></i> Agregar otro número
+                        </button>
                     </div>
                     <div class="form-group">
                         <label for="correo">Correo Electrónico</label>
@@ -634,6 +643,10 @@
                             <label for="precioMayoreoVenta">Precio de Mayoreo *</label>
                             <input type="number" id="precioMayoreoVenta" step="0.01" min="0">
                         </div>
+                        <div class="form-group">
+                            <label for="cantidadMinimaMayoreo">Cantidad mínima mayoreo *</label>
+                            <input type="number" id="cantidadMinimaMayoreo" min="1" required>
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -683,6 +696,118 @@
                         <i class="fas fa-save"></i>
                         Guardar
                     </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalles Pedido -->
+    <div id="detallesPedidoModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="detallesPedidoTitle">Detalles del Pedido</h3>
+                <span class="close" onclick="pedidosManager.closeDetallesModal()">&times;</span>
+            </div>
+            <div class="modal-form">
+                <div class="pedido-detalles-info">
+                    <div class="form-section">
+                        <h4><i class="fas fa-user"></i> Cliente</h4>
+                        <p id="detallesPedidoCliente" class="clickable-client"
+                            style="cursor:pointer; color: var(--azul-fuerte); text-decoration: underline;"></p>
+                    </div>
+
+                    <div class="form-section">
+                        <h4><i class="fas fa-calendar-alt"></i> Fecha de Entrega</h4>
+                        <p id="detallesPedidoEntrega"></p>
+                    </div>
+
+                    <div class="form-section">
+                        <h4><i class="fas fa-map-marker-alt"></i> Dirección de Entrega</h4>
+                        <p id="detallesPedidoDireccion"></p>
+                    </div>
+
+                    <div class="form-section">
+                        <h4><i class="fas fa-sticky-note"></i> Notas</h4>
+                        <p id="detallesPedidoNotas"></p>
+                    </div>
+
+                    <div class="form-section">
+                        <h4><i class="fas fa-box-open"></i> Productos</h4>
+                        <div id="detallesPedidoProductos" class="productos-lista"></div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4><i class="fas fa-coins"></i> Total</h4>
+                        <p id="detallesPedidoTotal"></p>
+                    </div>
+
+                    <div class="form-section">
+                        <h4><i class="fas fa-tasks"></i> Estado</h4>
+                        <select id="detallesPedidoEstado">
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en_produccion">En Producción</option>
+                            <option value="entregado">Entregado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="pedidosManager.closeDetallesModal()">Cerrar</button>
+                <button class="btn-primary" onclick="pedidosManager.updateEstadoPedido()">
+                    <i class="fas fa-sync"></i> Actualizar Estado
+                </button>
+                <button class="btn-edit" onclick="pedidosManager.editPedido()">
+                    <i class="fas fa-edit"></i> Editar Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Reabastecer Producto -->
+    <div id="reabastecerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Reabastecer Producto</h3>
+                <span class="close" onclick="inventarioManager.closeReabastecerModal()">&times;</span>
+            </div>
+            <form id="reabastecerForm" class="modal-form">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fechaCompraReabastecimiento">Fecha de compra *</label>
+                        <input type="date" id="fechaCompraReabastecimiento" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="proveedorReabastecimiento">Proveedor *</label>
+                        <select id="proveedorReabastecimiento" required>
+                            <option value="">Seleccionar proveedor...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="costoTotalReabastecimiento">Costo Total *</label>
+                        <input type="number" id="costoTotalReabastecimiento" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cantidadReabastecimiento">Cantidad *</label>
+                        <input type="number" id="cantidadReabastecimiento" min="1" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="precioUnitarioReabastecimiento">Precio Unitario</label>
+                        <input type="number" id="precioUnitarioReabastecimiento" readonly>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary"
+                        onclick="inventarioManager.closeReabastecerModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar</button>
                 </div>
             </form>
         </div>
@@ -952,7 +1077,9 @@
             </div>
         </div>
     </div>
-
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/utils.js"></script>
     <script src="js/inventario.js"></script>
     <script src="js/compras.js"></script>
     <script src="js/pedidos.js"></script>

@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = 'index.html';
         }
     });
-
     function initializeDashboard() {
         // Inicializar elementos del dashboard
         initializeSidebar();

@@ -379,11 +379,13 @@ class InventarioManager {
             productoVentaSection.style.display = 'none';
             this.setRequired(['costoTotal', 'cantidadAgregar'], true);
             this.setRequired(['precioMenudeoVenta', 'precioMayoreoVenta'], false);
+            this.setRequired(['cantidadMinimaMayoreo'], true);
         } else if (tipoProducto === 'producto_venta') {
             materiaPrimaSection.style.display = 'none';
             productoVentaSection.style.display = 'block';
             this.setRequired(['costoTotal', 'cantidadAgregar'], false);
             this.setRequired(['precioMenudeoVenta', 'precioMayoreoVenta'], true);
+            this.setRequired(['cantidadMinimaMayoreo'], true);
         } else {
             materiaPrimaSection.style.display = 'none';
             productoVentaSection.style.display = 'none';
@@ -800,6 +802,7 @@ class InventarioManager {
             data.costoMenudeo = parseFloat(document.getElementById('costoMenudeo').value) || null;
             data.costoMayoreo = parseFloat(document.getElementById('costoMayoreo').value) || null;
             data.esPersonalizable = document.getElementById('esPersonalizable').checked;
+            data.cantidadMinimaMayoreo = parseInt(document.getElementById('cantidadMinimaMayoreo').value) || 0;
 
             if (data.esPersonalizable) {
                 data.anchoPersonalizable = parseFloat(document.getElementById('anchoPersonalizable').value) || null;

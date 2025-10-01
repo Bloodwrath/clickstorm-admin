@@ -2527,15 +2527,22 @@ body {
 
     /* Responsive para inventario */
 
+    .productos-grid {
+        grid-template-columns: 1fr;
+        padding: 15px;
+        gap: 20px;
+    }
 
+    /* Responsive para productos */
     .producto-actions {
-        flex-direction: column;
-        gap: 10px;
+        display: flex;
+        flex-direction: column !important;
+        gap: 10px !important;
     }
 
     .producto-actions button {
-        flex: none;
-        width: 100%;
+        flex: none !important;
+        width: 100% !important;
     }
 
     .inventory-filters {
@@ -2555,6 +2562,8 @@ body {
         width: 100%;
         justify-content: space-between;
     }
+
+
 
     /* Responsive para detalles */
     .producto-details-main {

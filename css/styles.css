@@ -830,12 +830,10 @@ body {
     border-radius: 10px;
     width: 90%;
     max-width: 600px;
-    max-height: calc(100vh - 20px);
-    /* usar todo el alto visible */
+    max-height: calc(100vh - 40px);
+    /* deja espacio para la barra inferior del navegador */
     overflow-y: auto;
     animation: slideIn 0.3s;
-    overscroll-behavior: contain;
-    /* evita "scroll rebote" raro */
 }
 
 .modal-large {
@@ -2526,8 +2524,7 @@ body {
     }
 
     /* Responsive para inventario */
-
-    .productos-grid {
+    .inventario-grid {
         grid-template-columns: 1fr;
         padding: 15px;
         gap: 20px;
@@ -2535,14 +2532,15 @@ body {
 
     /* Responsive para productos */
     .producto-actions {
-        display: flex;
-        flex-direction: column !important;
-        gap: 10px !important;
+        flex-direction: column;
+        gap: 10px;
     }
 
-    .producto-actions button {
-        flex: none !important;
-        width: 100% !important;
+    .producto-actions .btn-edit,
+    .producto-actions .btn-delete,
+    .producto-actions .btn-secondary {
+        flex: none;
+        width: 100%;
     }
 
     .inventory-filters {
@@ -2692,10 +2690,10 @@ body {
 
     .modal-content,
     .modal-large {
-        margin: 2% auto;
+        margin: 5% auto;
         width: 95%;
-        max-height: calc(100vh - 40px);
-        /* deja espacio por la barra inferior */
+        max-height: 90vh;
+        /* que use todo el alto disponible sin esconder botones */
         border-radius: 8px;
     }
 
